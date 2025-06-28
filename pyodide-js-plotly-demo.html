@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pyodide → JS Plotly Demo</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+            text-align: center;
+        }
+        .loading {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #ffc107;
+        }
+        .ready {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+        }
+        .error {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid #dc3545;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 8px;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+        .method-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐍➡️📊 Pyodide → JS Plotly Demo</h1>
+        <p class="subtitle">
+            <span class="method-badge">Method B</span>
+            Python for computation, JavaScript Plotly for visualization
+        </p>
+        
+        <div id="status" class="status loading">Loading Pyodide...</div>
+        
+        <div class="controls">
+            <div class="grid">
+                <button id="createSankey" onclick="createSankeyChart()" disabled>Sankey: Supply Chain</button>
+                <button id="createScatter" onclick="createScatterChart()" disabled>Scatter: Data Analysis</button>
+                <button id="createHeatmap" onclick="createHeatmapChart()" disabled>Heatmap: Correlation Matrix</button>
+                <button id="createSurface" onclick="createSurfaceChart()" disabled>3D Surface: Math Function</button>
+            </div>
+            <button onclick="clearChart()">Clear Chart</button>
+        </div>
+        
+        <div class="chart-container" id="plotlyChart">
+            <p style="text-align: center; color: #666; margin-top: 200px;">
+                Click a button above to see Python data processing → JavaScript Plotly visualization
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let pyodide = null;
+        let isLoading = true;
+
+        async function initPyodide() {
+            const statusEl = document.getElementById('status');
+            const buttons = document.querySelectorAll('button[id^="create"]');
+            
+            try {
+                statusEl.textContent = 'Loading Pyodide...';
+                statusEl.className = 'status loading';
+                
+                pyodide = await loadPyodide({
+                    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/"
+                });
+                
+                statusEl.textContent = 'Loading Python packages...';
+                await pyodide.loadPackage(['numpy', 'micropip']);
+                
+                await pyodide.runPythonAsync(`
+                    import micropip
+                    # await micropip.install('pandas')  # Uncomment if needed
+                `);
+                
+                statusEl.textContent = '✅ Ready! Python computation + JS Plotly loaded.';
+                statusEl.className = 'status ready';
+                
+                buttons.forEach(btn => btn.disabled = false);
+                isLoading = false;
+                console.log('Pyodide ready for computation!');
+                
+            } catch (error) {
+                statusEl.textContent = `❌ Failed to load: ${error.message}`;
+                statusEl.className = 'status error';
+                console.error('Initialization failed:', error);
+            }
+        }
+
+        async function createSankeyChart() {
+            if (isLoading || !pyodide) return;
+            updateStatus('Computing supply chain data with Python...');
+            
+            try {
+                const chartData = await pyodide.runPythonAsync(`
+import json
+import random
+
+def analyze_supply_chain():
+    suppliers = ['Raw Materials', 'Component A', 'Component B', 'Component C']
+    manufacturers = ['Factory 1', 'Factory 2', 'Assembly Plant']
+    distributors = ['Distributor A', 'Distributor B']
+    retailers = ['Retail Chain', 'Online Store']
+    
+    labels = suppliers + manufacturers + distributors + retailers
+    flows = []
+    
+    for i, supplier in enumerate(suppliers):
+        for j, manufacturer in enumerate(manufacturers):
+            value = random.randint(50, 200) * (1 + j * 0.3)
+            flows.append({'source': i, 'target': len(suppliers) + j, 'value': value})
+    
+    for i, manufacturer in enumerate(manufacturers):
+        for j, distributor in enumerate(distributors):
+            value = random.randint(100, 300) * (1 + i * 0.2)
+            flows.append({'source': len(suppliers) + i, 'target': len(suppliers) + len(manufacturers) + j, 'value': value})
+    
+    for i, distributor in enumerate(distributors):
+        for j, retailer in enumerate(retailers):
+            value = random.randint(80, 250) * (1 + j * 0.4)
+            flows.append({'source': len(suppliers) + len(manufacturers) + i, 'target': len(suppliers) + len(manufacturers) + len(distributors) + j, 'value': value})
+    
+    return {'labels': labels, 'flows': flows}
+
+result = analyze_supply_chain()
+json.dumps(result)
+                `);
+                
+                const data = JSON.parse(chartData);
+                const plotData = [{
+                    type: "sankey",
+                    node: {
+                        pad: 15,
+                        thickness: 20,
+                        line: {color: "black", width: 0.5},
+                        label: data.labels,
+                        color: data.labels.map((_, i) => `hsl(${i * 360 / data.labels.length}, 70%, 60%)`)
+                    },
+                    link: {
+                        source: data.flows.map(f => f.source),
+                        target: data.flows.map(f => f.target),
+                        value: data.flows.map(f => f.value),
+                        color: data.flows.map((_, i) => `hsla(${i * 360 / data.flows.length}, 60%, 60%, 0.4)`)
+                    }
+                }];
+                
+                const layout = {
+                    title: "Supply Chain Flow Analysis",
+                    font: {size: 12},
+                    height: 500,
+                    margin: {l: 0, r: 0, t: 50, b: 0}
+                };
+                
+                Plotly.newPlot('plotlyChart', plotData, layout, {displayModeBar: true});
+                updateStatus('✅ Supply chain visualization complete!', 'ready');
+                
+            } catch (error) {
+                handleError('Sankey chart creation', error);
+            }
+        }
+
+        async function createScatterChart() {
+            if (isLoading || !pyodide) return;
+            updateStatus('Analyzing dataset with Python...');
+            
+            try {
+                const chartData = await pyodide.runPythonAsync(`
+import json
+import numpy as np
+
+def analyze_customer_data():
+    np.random.seed(42)
+    n_customers = 500
+    
+    age = np.random.normal(35, 12, n_customers)
+    income = np.random.normal(50000, 15000, n_customers) + age * 800
+    spending = income * 0.3 + np.random.normal(0, 2000, n_customers)
+    satisfaction = 10 - (abs(spending - income * 0.25) / 1000) + np.random.normal(0, 1, n_customers)
+    
+    categories = []
+    for i in range(n_customers):
+        if satisfaction[i] > 8 and spending[i] > income[i] * 0.25:
+            categories.append('High Value')
+        elif satisfaction[i] > 6:
+            categories.append('Satisfied')
+        elif spending[i] < income[i] * 0.15:
+            categories.append('Conservative')
+        else:
+            categories.append('At Risk')
+    
+    return {
+        'x': age.tolist(),
+        'y': spending.tolist(),
+        'income': income.tolist(),
+        'satisfaction': satisfaction.tolist(),
+        'categories': categories
+    }
+
+result = analyze_customer_data()
+json.dumps(result)
+                `);
+                
+                const data = JSON.parse(chartData);
+                const categories = [...new Set(data.categories)];
+                const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
+                
+                const plotData = categories.map((cat, i) => {
+                    const indices = data.categories.map((c, idx) => c === cat ? idx : -1).filter(idx => idx !== -1);
+                    return {
+                        x: indices.map(idx => data.x[idx]),
+                        y: indices.map(idx => data.y[idx]),
+                        mode: 'markers',
+                        type: 'scatter',
+                        name: cat,
+                        marker: {
+                            color: colors[i],
+                            size: indices.map(idx => Math.sqrt(data.income[idx] / 1000)),
+                            opacity: 0.7,
+                            line: {width: 1, color: 'white'}
+                        },
+                        text: indices.map(idx => `Income: $${Math.round(data.income[idx])}<br>Satisfaction: ${data.satisfaction[idx].toFixed(1)}`),
+                        hovertemplate: '%{text}<br>Age: %{x}<br>Spending: $%{y}<extra></extra>'
+                    };
+                });
+                
+                const layout = {
+                    title: 'Customer Segmentation Analysis',
+                    xaxis: {title: 'Age'},
+                    yaxis: {title: 'Annual Spending ($)'},
+                    height: 500,
+                    hovermode: 'closest'
+                };
+                
+                Plotly.newPlot('plotlyChart', plotData, layout, {displayModeBar: true});
+                updateStatus('✅ Customer analysis visualization complete!', 'ready');
+                
+            } catch (error) {
+                handleError('Scatter chart creation', error);
+            }
+        }
+
+        async function createHeatmapChart() {
+            if (isLoading || !pyodide) return;
+            updateStatus('Computing correlation matrix with Python...');
+            
+            try {
+                const chartData = await pyodide.runPythonAsync(`
+import json
+import numpy as np
+
+def compute_correlation_analysis():
+    np.random.seed(123)
+    assets = ['Stocks', 'Bonds', 'Real Estate', 'Commodities', 'Crypto', 'Cash']
+    n_assets = len(assets)
+    
+    base_corr = np.array([
+        [1.0,  -0.2,  0.6,   0.3,   0.1,  -0.8],
+        [-0.2,  1.0, -0.1,  -0.3,  -0.2,   0.4],
+        [0.6,  -0.1,  1.0,   0.4,   0.2,  -0.3],
+        [0.3,  -0.3,  0.4,   1.0,   0.0,  -0.2],
+        [0.1,  -0.2,  0.2,   0.0,   1.0,  -0.1],
+        [-0.8,  0.4, -0.3,  -0.2,  -0.1,   1.0]
+    ])
+    
+    noise = np.random.normal(0, 0.05, (n_assets, n_assets))
+    noise = (noise + noise.T) / 2
+    corr_matrix = base_corr + noise
+    np.fill_diagonal(corr_matrix, 1.0)
+    corr_matrix = np.clip(corr_matrix, -1, 1)
+    
+    return {'correlation_matrix': corr_matrix.tolist(), 'assets': assets}
+
+result = compute_correlation_analysis()
+json.dumps(result)
+                `);
+                
+                const data = JSON.parse(chartData);
+                const plotData = [{
+                    z: data.correlation_matrix,
+                    x: data.assets,
+                    y: data.assets,
+                    type: 'heatmap',
+                    colorscale: [
+                        [0, '#d73027'],
+                        [0.25, '#f46d43'],
+                        [0.5, '#ffffff'],
+                        [0.75, '#74add1'],
+                        [1, '#313695']
+                    ],
+                    zmid: 0,
+                    text: data.correlation_matrix.map(row => row.map(val => val.toFixed(2))),
+                    texttemplate: "%{text}",
+                    textfont: {"size": 12},
+                    hoverongaps: false
+                }];
+                
+                const layout = {
+                    title: 'Asset Class Correlation Matrix',
+                    height: 500,
+                    margin: {l: 100, r: 50, t: 50, b: 100}
+                };
+                
+                Plotly.newPlot('plotlyChart', plotData, layout, {displayModeBar: true});
+                updateStatus('✅ Correlation analysis complete!', 'ready');
+                
+            } catch (error) {
+                handleError('Heatmap creation', error);
+            }
+        }
+
+        async function createSurfaceChart() {
+            if (isLoading || !pyodide) return;
+            updateStatus('Computing 3D mathematical surface with Python...');
+            
+            try {
+                const chartData = await pyodide.runPythonAsync(`
+import json
+import numpy as np
+
+def compute_3d_surface():
+    x = np.linspace(-5, 5, 50)
+    y = np.linspace(-5, 5, 50)
+    X, Y = np.meshgrid(x, y)
+    
+    Z = (np.sin(np.sqrt(X**2 + Y**2)) * np.exp(-0.1 * (X**2 + Y**2)) + 
+         0.3 * np.cos(X) * np.sin(Y) + 
+         0.2 * np.exp(-0.05 * ((X-2)**2 + (Y-1)**2)))
+    
+    return {'x': x.tolist(), 'y': y.tolist(), 'z': Z.tolist()}
+
+result = compute_3d_surface()
+json.dumps(result)
+                `);
+                
+                const data = JSON.parse(chartData);
+                const plotData = [{
+                    z: data.z,
+                    x: data.x,
+                    y: data.y,
+                    type: 'surface',
+                    colorscale: 'Viridis',
+                    contours: {
+                        z: {
+                            show: true,
+                            usecolormap: true,
+                            highlightcolor: "#42f462",
+                            project: {z: true}
+                        }
+                    }
+                }];
+                
+                const layout = {
+                    title: '3D Mathematical Surface',
+                    height: 500,
+                    scene: {
+                        xaxis: {title: 'X'},
+                        yaxis: {title: 'Y'},
+                        zaxis: {title: 'Z = f(x,y)'},
+                        camera: {eye: {x: 1.2, y: 1.2, z: 0.6}}
+                    }
+                };
+                
+                Plotly.newPlot('plotlyChart', plotData, layout, {displayModeBar: true});
+                updateStatus('✅ 3D surface visualization complete!', 'ready');
+                
+            } catch (error) {
+                handleError('3D surface creation', error);
+            }
+        }
+
+        function clearChart() {
+            document.getElementById('plotlyChart').innerHTML = 
+                `<p style="text-align: center; color: #666; margin-top: 200px;">
+                    Click a button above to see Python data processing → JavaScript Plotly visualization
+                </p>`;
+            updateStatus('Ready for next visualization', 'ready');
+        }
+
+        function updateStatus(message, type = 'loading') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function handleError(operation, error) {
+            console.error(`${operation} error:`, error);
+            document.getElementById('plotlyChart').innerHTML = 
+                `<p style="color: red; text-align: center; margin-top: 200px;">
+                    Error in ${operation}: ${error.message}
+                </p>`;
+            updateStatus(`❌ ${operation} failed`, 'error');
+        }
+
+        window.addEventListener('load', initPyodide);
+    </script>
+</body>
+</html>
