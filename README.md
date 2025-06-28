@@ -1,5 +1,13 @@
 # Pyodide + Plotly: Two Approaches Compared
 
+[![Status](https://img.shields.io/badge/Status-Ready-brightgreen)](https://github.com/BlockSecCA/pyodide-plotly-shootout)
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Pyodide](https://img.shields.io/badge/Pyodide-FFD43B?style=for-the-badge&logo=python&logoColor=white)](https://pyodide.org/)
+[![Plotly.js](https://img.shields.io/badge/Plotly.js-238C6F?style=for-the-badge&logo=plotly&logoColor=white)](https://plotly.com/javascript/)
+
+
 This project demonstrates two different architectural approaches for creating data visualizations using Python in the browser via Pyodide and Plotly.
 
 ## 🎯 The Problem
