@@ -212,4 +212,3 @@ While Pyodide offers powerful client-side Python execution, there are scenarios 
 - [Pyodide Documentation](https://pyodide.org/)
 - [Plotly.js Documentation](https://plotly.com/javascript/)
 - [Python Plotly Documentation](https://plotly.com/python/)
-- [El-Cheapo Development Patterns](./AI-Assistant-Workflow-Memento.md)
