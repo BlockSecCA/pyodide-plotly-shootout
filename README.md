@@ -198,6 +198,15 @@ Both approaches validate the core "El-Cheapo" concept:
 
 No installation, no servers, no configuration - just open and run!
 
+## Beyond Client-Side: When Pyodide Visualizations May Not Be Suitable
+
+While Pyodide offers powerful client-side Python execution, there are scenarios where a purely browser-based Python visualization approach may not be suitable, especially when Python is required for data processing:
+
+-   **Non-Web-Native GUI Toolkits**: If your Python data processing leads to visualizations exclusively rendered by desktop GUI libraries (e.g., some specialized scientific plotting tools built on PyQt, Tkinter, etc.) that lack web-based counterparts or export options, direct browser display is not feasible.
+-   **Extreme Performance or Low-Level Browser API Access**: For cutting-edge, highly specialized, or extremely performance-sensitive interactive visualizations that demand direct, low-level manipulation of WebGL/WebGPU contexts or very tight, synchronous loops with browser events, pure JavaScript/TypeScript and WebAssembly (not necessarily Python-in-WebAssembly) might be required for maximum control and minimal overhead.
+-   **Dependencies on Uncompiled Native C Extensions**: If your Python data processing relies on specific Python packages with critical C extensions that have not been compiled for WebAssembly and included in Pyodide, that part of your Python code cannot run in the browser, preventing a fully client-side visualization workflow.
+-   **Heavy Server-Side Computation or External Resource Access**: Visualizations that inherently require continuous, heavy server-side Python computation (e.g., very long-running, CPU-intensive calculations that would block the browser's UI thread) or constant interaction with external resources (e.g., massive databases, real-time data streams, proprietary APIs) that cannot be accessed directly from the browser (due to security policies like CORS or performance limitations) will necessitate server-side Python processing, with only the processed results sent to the browser for visualization.
+
 ## 📚 Further Reading
 
 - [Pyodide Documentation](https://pyodide.org/)
